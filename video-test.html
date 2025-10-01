@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Test</title>
+</head>
+<body>
+    <h1>Video Streaming Test</h1>
+    
+    <h2>Original Video (Video ID: 1)</h2>
+    <video controls width="600">
+        <source src="http://localhost:8000/api/videos/1/stream/" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    
+    <h2>720p Version (Video ID: 1)</h2>
+    <video controls width="600">
+        <source src="http://localhost:8000/api/videos/1/stream/720p/" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    
+    <h2>Original Video (Video ID: 2)</h2>
+    <video controls width="600">
+        <source src="http://localhost:8000/api/videos/2/stream/" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    
+    <h2>720p Version (Video ID: 2)</h2>
+    <video controls width="600">
+        <source src="http://localhost:8000/api/videos/2/stream/720p/" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    
+    <script>
+        // Add error handling
+        const videos = document.querySelectorAll('video');
+        videos.forEach((video, index) => {
+            video.addEventListener('error', (e) => {
+                console.error(`Video ${index + 1} error:`, e);
+                const errorDiv = document.createElement('div');
+                errorDiv.style.color = 'red';
+                errorDiv.textContent = `Error loading video: ${e.target.error?.message || 'Unknown error'}`;
+                video.parentNode.insertBefore(errorDiv, video.nextSibling);
+            });
+            
+            video.addEventListener('loadstart', () => {
+                console.log(`Video ${index + 1} started loading`);
+            });
+            
+            video.addEventListener('loadeddata', () => {
+                console.log(`Video ${index + 1} loaded successfully`);
+            });
+        });
+    </script>
+</body>
+</html>
