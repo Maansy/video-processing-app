@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'videos',
+    'hls_videos',
 ]
 
 MIDDLEWARE = [
@@ -161,6 +163,23 @@ VIDEO_RESOLUTIONS = {
     '720p': {'width': 1280, 'height': 720, 'bitrate': '2500k'},
     '1080p': {'width': 1920, 'height': 1080, 'bitrate': '5000k'},
 }
+
+# AWS S3 Settings
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='')
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='')
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='')
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='eu-north-1')
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
+AWS_QUERYSTRING_AUTH = True
+AWS_S3_CUSTOM_DOMAIN = None
+
+# S3 URL expiration time (in seconds)
+AWS_PRESIGNED_URL_EXPIRATION = 3600  # 1 hour
+
+# Use S3 for storage (set to True to use S3, False for local storage)
+USE_S3_STORAGE = config('USE_S3_STORAGE', default=True, cast=bool)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

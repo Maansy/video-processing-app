@@ -13,7 +13,8 @@ class Video(models.Model):
     
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    original_file = models.FileField(upload_to='videos/original/')
+    original_file = models.FileField(upload_to='videos/original/', blank=True, null=True)
+    s3_key = models.CharField(max_length=500, blank=True, null=True, help_text="S3 object key for original file")
     file_size = models.BigIntegerField(null=True, blank=True)
     duration = models.FloatField(null=True, blank=True)  # in seconds
     
@@ -40,13 +41,23 @@ class Video(models.Model):
     
     @property
     def filename(self):
-        return os.path.basename(self.original_file.name)
+        if self.original_file:
+            return os.path.basename(self.original_file.name)
+        elif self.s3_key:
+            return os.path.basename(self.s3_key)
+        return "unknown"
+    
+    @property
+    def is_s3_stored(self):
+        """Check if video is stored in S3"""
+        return bool(self.s3_key)
 
 
 class VideoResolution(models.Model):
     video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='resolutions')
     resolution = models.CharField(max_length=10)  # e.g., '720p', '1080p'
-    file_path = models.CharField(max_length=500)  # relative path to processed file
+    file_path = models.CharField(max_length=500, blank=True, null=True)  # relative path to processed file (local)
+    s3_key = models.CharField(max_length=500, blank=True, null=True, help_text="S3 object key for processed file")
     file_size = models.BigIntegerField(null=True, blank=True)
     bitrate = models.CharField(max_length=20, null=True, blank=True)
     width = models.IntegerField()
@@ -76,6 +87,11 @@ class VideoResolution(models.Model):
     @property
     def is_failed(self):
         return self.processing_failed_at is not None
+    
+    @property
+    def is_s3_stored(self):
+        """Check if this resolution is stored in S3"""
+        return bool(self.s3_key)
 
 
 class VideoVersion(models.Model):

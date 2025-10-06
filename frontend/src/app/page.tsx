@@ -5,6 +5,7 @@ import VideoUpload from '@/components/VideoUpload';
 import VideoList from '@/components/VideoList';
 import VideoPlayer from '@/components/VideoPlayer';
 import { Video } from '@/types/video';
+import Link from 'next/link';
 
 export default function Home() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
@@ -32,12 +33,22 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Video Processing Platform
-          </h1>
-          <p className="text-gray-600">
-            Upload videos and automatically generate multiple resolutions for optimal streaming
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                Video Processing Platform
+              </h1>
+              <p className="text-gray-600">
+                Upload videos and automatically generate multiple resolutions for optimal streaming
+              </p>
+            </div>
+            <Link
+              href="/hls"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-md font-medium hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg"
+            >
+              🚀 Try HLS Streaming →
+            </Link>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
