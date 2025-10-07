@@ -1,2 +1,2 @@
 backend/.env
-backend/.env.example
+# Keep .env.example - it's a template without real credentials

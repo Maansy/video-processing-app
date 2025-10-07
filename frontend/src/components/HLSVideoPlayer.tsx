@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import Hls from 'hls.js';
 
 interface HLSVariant {
   id: number;
@@ -30,25 +31,68 @@ interface HLSVideoPlayerProps {
 export default function HLSVideoPlayer({ video, onClose }: HLSVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const hlsRef = useRef<Hls | null>(null);
 
   useEffect(() => {
-    if (!video || !videoRef.current) return;
+    if (!video || !videoRef.current || !video.master_playlist_url) return;
 
     const videoElement = videoRef.current;
+    const videoSrc = video.master_playlist_url;
 
     // Check if browser supports HLS natively (Safari)
     if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-      console.log('Native HLS support detected (Safari)');
-      if (video.master_playlist_url) {
-        videoElement.src = video.master_playlist_url;
-      }
+      console.log('✅ Native HLS support detected (Safari)');
+      videoElement.src = videoSrc;
+      setError(null);
+    } else if (Hls.isSupported()) {
+      // Use hls.js for other browsers (Chrome, Firefox, Edge)
+      console.log('✅ Using hls.js for HLS playback');
+      
+      const hls = new Hls({
+        debug: false,
+        enableWorker: true,
+        lowLatencyMode: false,
+      });
+      
+      hlsRef.current = hls;
+      
+      hls.loadSource(videoSrc);
+      hls.attachMedia(videoElement);
+      
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log('✅ HLS manifest loaded successfully');
+        setError(null);
+      });
+      
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error('❌ HLS error:', data);
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              console.log('Network error, trying to recover...');
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              console.log('Media error, trying to recover...');
+              hls.recoverMediaError();
+              break;
+            default:
+              setError(`Fatal error: ${data.details}`);
+              hls.destroy();
+              break;
+          }
+        }
+      });
     } else {
-      // For other browsers, we would need hls.js
-      console.log('Native HLS not supported, would need hls.js library');
-      setError('HLS playback requires hls.js library for this browser. Please install: npm install hls.js');
+      console.log('❌ HLS not supported');
+      setError('Your browser does not support HLS playback');
     }
 
     return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
       if (videoElement) {
         videoElement.src = '';
       }
@@ -104,17 +148,16 @@ export default function HLSVideoPlayer({ video, onClose }: HLSVideoPlayerProps) 
 
         {/* Video Player */}
         <div className="p-6">
-          {error ? (
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-              <p className="text-sm text-yellow-800">
-                <strong>⚠️ HLS.js Required:</strong> {error}
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+              <p className="text-sm text-red-800">
+                <strong>❌ Playback Error:</strong> {error}
               </p>
-              <p className="text-xs text-yellow-700 mt-2">
-                For now, you can test with Safari browser which has native HLS support,
-                or we can install hls.js library for cross-browser compatibility.
+              <p className="text-xs text-red-700 mt-2">
+                Please try using a modern browser (Chrome, Firefox, Safari, Edge).
               </p>
             </div>
-          ) : null}
+          )}
 
           <div className="bg-black rounded-lg overflow-hidden">
             <video
@@ -125,6 +168,13 @@ export default function HLSVideoPlayer({ video, onClose }: HLSVideoPlayerProps) 
             >
               Your browser does not support the video tag.
             </video>
+          </div>
+
+          {/* Browser Compatibility Info */}
+          <div className="mt-4 p-3 bg-green-50 rounded border border-green-200">
+            <p className="text-xs text-green-800">
+              <strong>✅ Browser Support:</strong> This player works with Chrome, Firefox, Safari, and Edge using hls.js library.
+            </p>
           </div>
 
           {/* HLS Info */}
